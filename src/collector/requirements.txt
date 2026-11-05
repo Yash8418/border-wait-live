@@ -1,0 +1,2 @@
+# Runtime dependencies for the Lambda functions.
+# boto3 is provided by the AWS Lambda Python runtime, and the collector otherwise uses only the standard library.
