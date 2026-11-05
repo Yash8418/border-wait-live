@@ -1,0 +1,33 @@
+name: Capture feed sample
+
+# Saves a snapshot of the live CBSA feed so the parser can be developed and
+# tested against real data. Runs when this workflow changes, or on demand.
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/capture-sample.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download current wait times
+        run: |
+          curl --fail --silent --show-error --location \
+            --user-agent "border-wait-live/1.0 (+https://github.com/Yash8418/border-wait-live)" \
+            --output samples/bwt-eng.csv \
+            https://www.cbsa-asfc.gc.ca/bwt-taf/bwt-eng.csv
+          echo "Captured $(wc -l < samples/bwt-eng.csv) lines"
+          head -5 samples/bwt-eng.csv
+      - name: Commit sample
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add samples/bwt-eng.csv
+          git diff --cached --quiet || (git commit -m "Capture live feed sample" && git push)
