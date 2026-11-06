@@ -1,12 +1,16 @@
-"""Store readings in DynamoDB.
+"""Store readings in DynamoDB using a single-table design.
 
-Table design (single table):
-    PK  crossing_id   e.g. "ambassador-bridge"
-    SK  observed_at   ISO-8601 UTC, e.g. "2026-11-05T04:15:00Z"
+    Item type     pk                            sk
+    ------------  ----------------------------  ----------------------
+    History       CROSSING#ambassador-bridge    2026-11-05T04:15:00Z
+    Latest        LATEST                        ambassador-bridge
 
-Querying one crossing's history by time range is a single Query on the partition.
-CBSA often republishes the same "Last updated" time for a crossing across several
-polls, so writes are conditional: re-collecting an unchanged reading is a no-op.
+- One crossing's history in a time range is a single Query on its partition.
+- Every crossing's current wait is a single Query on pk = LATEST (no table scans).
+
+CBSA often republishes the same "Last updated" time across several polls, so history
+writes are conditional (re-collecting an unchanged reading is a no-op), and the latest
+item is only replaced by a newer reading.
 """
 
 from __future__ import annotations
@@ -17,6 +21,12 @@ from datetime import datetime, timezone
 from botocore.exceptions import ClientError
 
 from collector.feed import Reading, Wait
+
+LATEST_PK = "LATEST"
+
+
+def history_pk(crossing_id: str) -> str:
+    return f"CROSSING#{crossing_id}"
 
 
 @dataclass
@@ -36,7 +46,7 @@ def _wait_attrs(prefix: str, wait: Wait) -> dict:
     return attrs
 
 
-def to_item(reading: Reading, collected_at: datetime) -> dict:
+def reading_attrs(reading: Reading, collected_at: datetime) -> dict:
     return {
         "crossing_id": reading.crossing_id,
         "observed_at": to_utc_iso(reading.observed_at),
@@ -51,19 +61,35 @@ def to_item(reading: Reading, collected_at: datetime) -> dict:
     }
 
 
+def _is_condition_failure(error: ClientError) -> bool:
+    return error.response["Error"]["Code"] == "ConditionalCheckFailedException"
+
+
 def save_readings(table, readings: list[Reading], collected_at: datetime | None = None) -> WriteResult:
-    """Write readings that haven't been stored before. `table` is a boto3 DynamoDB Table resource."""
+    """Write new readings and keep each crossing's latest item current. `table` is a boto3 Table."""
     collected_at = collected_at or datetime.now(timezone.utc)
     result = WriteResult()
     for reading in readings:
+        attrs = reading_attrs(reading, collected_at)
         try:
             table.put_item(
-                Item=to_item(reading, collected_at),
-                ConditionExpression="attribute_not_exists(crossing_id) AND attribute_not_exists(observed_at)",
+                Item={"pk": history_pk(reading.crossing_id), "sk": attrs["observed_at"], **attrs},
+                ConditionExpression="attribute_not_exists(pk)",
             )
             result.written += 1
         except ClientError as error:
-            if error.response["Error"]["Code"] != "ConditionalCheckFailedException":
+            if not _is_condition_failure(error):
                 raise
             result.unchanged += 1
+            continue
+
+        try:
+            table.put_item(
+                Item={"pk": LATEST_PK, "sk": reading.crossing_id, **attrs},
+                ConditionExpression="attribute_not_exists(pk) OR observed_at < :new",
+                ExpressionAttributeValues={":new": attrs["observed_at"]},
+            )
+        except ClientError as error:
+            if not _is_condition_failure(error):  # an older reading never replaces a newer one
+                raise
     return result
