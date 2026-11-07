@@ -4,6 +4,13 @@ Description: >
   Border Wait Live - collects CBSA land border wait times every 15 minutes
   and stores them in DynamoDB.
 
+Parameters:
+  CollectorScheduleState:
+    Type: String
+    AllowedValues: [ENABLED, DISABLED]
+    Default: ENABLED
+    Description: Turn the 15-minute collection on or off without deleting anything.
+
 Globals:
   Function:
     Runtime: python3.12
@@ -35,7 +42,37 @@ Resources:
         - AttributeName: sk
           KeyType: RANGE
 
+  CollectorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Downloads the CBSA feed and stores new readings
+      Handler: collector.app.handler
+      Policies:
+        # Least privilege: the collector only ever writes items.
+        - Statement:
+            - Effect: Allow
+              Action: dynamodb:PutItem
+              Resource: !GetAtt ReadingsTable.Arn
+      Events:
+        Every15Minutes:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: rate(15 minutes)
+            State: !Ref CollectorScheduleState
+            RetryPolicy:
+              MaximumRetryAttempts: 1
+              MaximumEventAgeInSeconds: 600
+
+  CollectorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${CollectorFunction}
+      RetentionInDays: 14
+
 Outputs:
   TableName:
     Description: DynamoDB table holding the readings
     Value: !Ref ReadingsTable
+  CollectorFunctionName:
+    Description: Lambda function that collects the feed
+    Value: !Ref CollectorFunction
