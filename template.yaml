@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Border Wait Live - collects CBSA land border wait times every 15 minutes
+  and stores them in DynamoDB.
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    MemorySize: 128
+    Timeout: 30
+    CodeUri: src/
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref ReadingsTable
+
+Resources:
+  # Single table: history items (pk = CROSSING#<id>, sk = observed time) and
+  # one latest item per crossing (pk = LATEST, sk = <id>). See src/collector/storage.py.
+  ReadingsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+
+Outputs:
+  TableName:
+    Description: DynamoDB table holding the readings
+    Value: !Ref ReadingsTable
