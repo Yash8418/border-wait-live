@@ -10,6 +10,13 @@ Parameters:
     AllowedValues: [ENABLED, DISABLED]
     Default: ENABLED
     Description: Turn the 15-minute collection on or off without deleting anything.
+  AlertEmail:
+    Type: String
+    Default: ""
+    Description: Optional email address to notify when collection fails (leave blank for none).
+
+Conditions:
+  HasAlertEmail: !Not [!Equals [!Ref AlertEmail, ""]]
 
 Globals:
   Function:
@@ -96,6 +103,33 @@ Resources:
     Properties:
       LogGroupName: !Sub /aws/lambda/${ApiFunction}
       RetentionInDays: 14
+
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Condition: HasAlertEmail
+    Properties:
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref AlertEmail
+
+  # Fires when the collector fails on 3 consecutive runs (45 minutes without new data).
+  CollectorErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Border wait collector has failed 3 runs in a row
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref CollectorFunction
+      Statistic: Sum
+      Period: 900
+      EvaluationPeriods: 3
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlertEmail, [!Ref AlertTopic], !Ref AWS::NoValue]
+      OKActions: !If [HasAlertEmail, [!Ref AlertTopic], !Ref AWS::NoValue]
 
 Outputs:
   TableName:
