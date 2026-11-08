@@ -69,6 +69,34 @@ Resources:
       LogGroupName: !Sub /aws/lambda/${CollectorFunction}
       RetentionInDays: 14
 
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Public read API for the latest wait times and history
+      Handler: api.app.handler
+      # Caps concurrent executions so a traffic spike can't run up costs.
+      ReservedConcurrentExecutions: 5
+      Policies:
+        # Least privilege: the API only reads.
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:Query
+              Resource: !GetAtt ReadingsTable.Arn
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins: ["*"]
+          AllowMethods: [GET]
+          MaxAge: 3600
+
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${ApiFunction}
+      RetentionInDays: 14
+
 Outputs:
   TableName:
     Description: DynamoDB table holding the readings
@@ -76,3 +104,6 @@ Outputs:
   CollectorFunctionName:
     Description: Lambda function that collects the feed
     Value: !Ref CollectorFunction
+  ApiUrl:
+    Description: Public URL of the read API (try <ApiUrl>crossings)
+    Value: !GetAtt ApiFunctionUrl.FunctionUrl
