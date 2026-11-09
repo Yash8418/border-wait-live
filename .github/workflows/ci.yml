@@ -26,4 +26,4 @@ jobs:
       - name: Unit tests (DynamoDB mocked with moto)
         run: pytest -q
       - name: Validate CloudFormation / SAM template
-        run: cfn-lint template.yaml
+        run: cfn-lint template.yaml infra/github-deploy-role.yaml
