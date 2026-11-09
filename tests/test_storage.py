@@ -1,5 +1,5 @@
 from dataclasses import replace
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from boto3.dynamodb.conditions import Key
 
@@ -54,7 +54,7 @@ def test_latest_item_moves_forward_but_never_back(table):
 
 
 def test_stored_item_shape(table):
-    save_readings(table, sample_readings(), collected_at=datetime(2026, 11, 5, 5, 0, tzinfo=timezone.utc))
+    save_readings(table, sample_readings(), collected_at=datetime(2026, 11, 5, 5, 0, tzinfo=UTC))
     item = table.get_item(Key={"pk": history_pk("ambassador-bridge"), "sk": "2026-11-05T04:15:00Z"})["Item"]
     assert item["office"] == "Ambassador Bridge"
     assert item["travellers_canada_status"] == "reported"

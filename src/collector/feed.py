@@ -15,13 +15,20 @@ FEED_URL = "https://www.cbsa-asfc.gc.ca/bwt-taf/bwt-eng.csv"
 USER_AGENT = "border-wait-live/1.0 (+https://github.com/Yash8418/border-wait-live)"
 
 TZ_OFFSETS_HOURS = {
-    "NDT": -2.5, "NST": -3.5,
-    "ADT": -3, "AST": -4,
-    "EDT": -4, "EST": -5,
-    "CDT": -5, "CST": -6,
-    "MDT": -6, "MST": -7,
-    "PDT": -7, "PST": -8,
-    "AKDT": -8, "AKST": -9,
+    "NDT": -2.5,
+    "NST": -3.5,
+    "ADT": -3,
+    "AST": -4,
+    "EDT": -4,
+    "EST": -5,
+    "CDT": -5,
+    "CST": -6,
+    "MDT": -6,
+    "MST": -7,
+    "PDT": -7,
+    "PST": -8,
+    "AKDT": -8,
+    "AKST": -9,
 }
 
 _MINUTES = re.compile(r"^(\d+)\s*(?:min(?:ute)?s?)?$", re.IGNORECASE)

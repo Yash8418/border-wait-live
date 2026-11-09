@@ -54,7 +54,9 @@ def test_history_time_range(loaded):
     )
     assert status == 200
     assert [r["observed_at"] for r in body["readings"]] == [
-        "2026-11-05T05:15:00Z", "2026-11-05T06:15:00Z", "2026-11-05T07:15:00Z",
+        "2026-11-05T05:15:00Z",
+        "2026-11-05T06:15:00Z",
+        "2026-11-05T07:15:00Z",
     ]
     assert body["truncated"] is False
 

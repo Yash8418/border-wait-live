@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import boto3
@@ -26,6 +26,7 @@ MAX_LIMIT = 2000
 MAX_RANGE = timedelta(days=31)
 CROSSING_ID = re.compile(r"^[a-z0-9-]{1,80}$")
 INTERNAL_KEYS = {"pk", "sk"}
+ROUTES = ["/crossings", "/crossings/{id}", "/crossings/{id}/history"]
 
 _table = None
 
@@ -92,7 +93,7 @@ def get_latest(table, crossing_id: str) -> dict | None:
 
 
 def get_history(table, crossing_id: str, params: dict) -> dict:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     end = parse_time(params.get("to"), now)
     start = parse_time(params.get("from"), end - timedelta(hours=24))
     if start >= end:
@@ -143,6 +144,6 @@ def handler(event, context):
                 return respond(200, latest) if latest else respond(404, {"error": "Crossing not found"})
             if parts[2] == "history":
                 return respond(200, get_history(table, crossing_id, params))
-        return respond(404, {"error": "Not found", "routes": ["/crossings", "/crossings/{id}", "/crossings/{id}/history"]})
+        return respond(404, {"error": "Not found", "routes": ROUTES})
     except BadRequest as error:
         return respond(400, {"error": str(error)})

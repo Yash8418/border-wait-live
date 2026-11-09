@@ -28,8 +28,13 @@ def test_parse_wait(raw, expected):
 
 @pytest.mark.parametrize(
     "raw, offset_hours",
-    [("2026-11-04 23:15 EST", -5), ("2026-11-05 00:15 AST", -4), ("2026-10-16 10:33 ADT", -3),
-     ("2026-07-01 08:00 PDT", -7), ("2026-07-01 08:00 NDT", -2.5)],
+    [
+        ("2026-11-04 23:15 EST", -5),
+        ("2026-11-05 00:15 AST", -4),
+        ("2026-10-16 10:33 ADT", -3),
+        ("2026-07-01 08:00 PDT", -7),
+        ("2026-07-01 08:00 NDT", -2.5),
+    ],
 )
 def test_parse_timestamp_uses_crossing_timezone(raw, offset_hours):
     assert parse_timestamp(raw).utcoffset() == timedelta(hours=offset_hours)

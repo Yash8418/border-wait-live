@@ -16,7 +16,7 @@ item is only replaced by a newer reading.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from botocore.exceptions import ClientError
 
@@ -36,7 +36,7 @@ class WriteResult:
 
 
 def to_utc_iso(value: datetime) -> str:
-    return value.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return value.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _wait_attrs(prefix: str, wait: Wait) -> dict:
@@ -67,7 +67,7 @@ def _is_condition_failure(error: ClientError) -> bool:
 
 def save_readings(table, readings: list[Reading], collected_at: datetime | None = None) -> WriteResult:
     """Write new readings and keep each crossing's latest item current. `table` is a boto3 Table."""
-    collected_at = collected_at or datetime.now(timezone.utc)
+    collected_at = collected_at or datetime.now(UTC)
     result = WriteResult()
     for reading in readings:
         attrs = reading_attrs(reading, collected_at)
