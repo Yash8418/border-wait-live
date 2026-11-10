@@ -25,3 +25,17 @@ EventBridge (every 15 min) ──▶ Collector Lambda ──▶ DynamoDB
 ## Data source
 
 [Current Border Wait Times](https://open.canada.ca/data/en/dataset/d4a716f5-a2fc-4c3c-88ed-451fe05900e4) — CBSA, Open Government Licence – Canada.
+
+## Status page
+
+[`site/`](site/) is a static page that reads the API: current waits at the three Windsor–Detroit crossings with a 24-hour trend, plus a filterable table of every port of entry. It refreshes every minute and flags readings more than 3 hours old.
+
+Until the API is deployed, it shows a sample built from a captured copy of the feed (`python scripts/build_sample.py`). To point it at the live API, set `window.BORDER_WAIT_API` in [`site/config.js`](site/config.js) to the stack's `ApiUrl` output, or open the page with `?api=<ApiUrl>`.
+
+```bash
+python -m http.server -d site 8000   # http://localhost:8000
+```
+
+## Deploying
+
+See [docs/aws-setup.md](docs/aws-setup.md). GitHub Actions deploys with short-lived OIDC credentials after CI passes.
