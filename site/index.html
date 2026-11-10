@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Border Wait Live</title>
+    <meta name="description" content="Current traveller and commercial wait times at Canada–US land border crossings, collected every 15 minutes." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="masthead">
+      <div class="wrap masthead__inner">
+        <div>
+          <p class="eyebrow">Canada-bound · CBSA estimates</p>
+          <h1>Border Wait Live</h1>
+        </div>
+        <p id="mode" class="mode" role="status">Loading…</p>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section aria-labelledby="windsor-title">
+        <div class="section-head">
+          <h2 id="windsor-title">Windsor – Detroit</h2>
+          <p class="muted" id="windsor-note"></p>
+        </div>
+        <div id="windsor" class="board"></div>
+      </section>
+
+      <section aria-labelledby="all-title">
+        <div class="section-head">
+          <h2 id="all-title">All crossings</h2>
+          <label class="search">
+            <span class="visually-hidden">Filter crossings</span>
+            <input id="filter" type="search" placeholder="Filter by name or place" autocomplete="off" />
+          </label>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Crossing</th>
+                <th scope="col" class="num">Travellers</th>
+                <th scope="col" class="num">Commercial</th>
+                <th scope="col" class="num">Updated</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <p id="empty" class="muted" hidden>No crossings match that filter.</p>
+      </section>
+    </main>
+
+    <footer class="wrap footer">
+      <p>
+        Data: <a href="https://open.canada.ca/data/en/dataset/d4a716f5-a2fc-4c3c-88ed-451fe05900e4">Canada Border Services Agency — Current Border Wait Times</a>,
+        Open Government Licence – Canada. Times are CBSA estimates for travellers entering Canada and can change quickly.
+      </p>
+      <p>Collected every 15 minutes by AWS Lambda into DynamoDB · <a href="https://github.com/Yash8418/border-wait-live">Source on GitHub</a></p>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
