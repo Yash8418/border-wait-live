@@ -10,6 +10,7 @@ const STALE_MS = 3 * 60 * 60 * 1000;
 
 const apiBase = (() => {
   const fromQuery = new URLSearchParams(location.search).get("api");
+  if (fromQuery === "sample") return "";
   const url = (fromQuery || window.BORDER_WAIT_API || "").trim();
   return url ? url.replace(/\/?$/, "/") : "";
 })();

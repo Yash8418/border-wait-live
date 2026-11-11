@@ -2,7 +2,7 @@
 
 A serverless AWS pipeline that records live wait times at Canada–US land border crossings every 15 minutes and serves them through a public API.
 
-> 🚧 Work in progress.
+**Live API:** [`/crossings`](https://usxkgejvlxpu7g5qnoasanrtjm0stxqu.lambda-url.us-east-2.on.aws/crossings) · deployed in `us-east-2`, collecting every 15 minutes since November 11, 2026.
 
 ## Why
 
@@ -30,7 +30,7 @@ EventBridge (every 15 min) ──▶ Collector Lambda ──▶ DynamoDB
 
 [`site/`](site/) is a static page that reads the API: current waits at the three Windsor–Detroit crossings with a 24-hour trend, plus a filterable table of every port of entry. It refreshes every minute and flags readings more than 3 hours old.
 
-Until the API is deployed, it shows a sample built from a captured copy of the feed (`python scripts/build_sample.py`). To point it at the live API, set `window.BORDER_WAIT_API` in [`site/config.js`](site/config.js) to the stack's `ApiUrl` output, or open the page with `?api=<ApiUrl>`.
+It reads the live API set in [`site/config.js`](site/config.js) (`window.BORDER_WAIT_API`). Open the page with `?api=<ApiUrl>` to use another deployment, or `?api=sample` to show a sample built from a captured copy of the feed (`python scripts/build_sample.py`).
 
 ```bash
 python -m http.server -d site 8000   # http://localhost:8000
