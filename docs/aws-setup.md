@@ -13,7 +13,7 @@ Setup takes about 15 minutes and only has to be done once.
 2. Turn on **MFA** for the root user: search **IAM**, then *Security recommendations → Add MFA*.
 3. Pick a region and use it everywhere below. This project defaults to **ca-central-1 (Canada Central)** — select it in the region menu at the top right of the console before creating anything.
 
-**Expected cost:** Lambda runs ~2,900 times a month for a few hundred milliseconds each, and DynamoDB stores a few hundred thousand small items a year. Both stay within the AWS ongoing free allowances; the read API uses a Lambda Function URL instead of API Gateway to avoid its charges. Concurrency on the public API is capped at 5 to limit any traffic spike.
+**Expected cost:** Lambda runs ~2,900 times a month for a few hundred milliseconds each, and DynamoDB stores a few hundred thousand small items a year. Both stay within the AWS ongoing free allowances; the read API uses a Lambda Function URL instead of API Gateway to avoid its charges. On accounts with a raised Lambda concurrency limit, set `ApiConcurrencyLimit` (e.g. 5) to cap the public API during a traffic spike; new accounts have a limit of 10, which doesn't leave room for a reservation.
 
 ## 2. Create the GitHub deploy role (one click)
 
@@ -63,6 +63,7 @@ To see it on the status page, run `python -m http.server -d site 8000` and open 
 | Deploy job is **skipped** | `AWS_DEPLOY_ROLE_ARN` isn't set as a repository *variable* (not a secret). |
 | `Not authorized to perform sts:AssumeRoleWithWebIdentity` | The environment must be named exactly `production`, and `GitHubRepo` in the role stack must match `owner/repo`. |
 | `EntityAlreadyExists` for the OIDC provider | Your account already has it: update the role stack with `CreateOidcProvider=false`. |
+| `decreases account's UnreservedConcurrentExecution below its minimum value of [10]` | Leave `ApiConcurrencyLimit` at 0 (the default); new accounts can't reserve concurrency yet. |
 | Role stack ends in `ROLLBACK_COMPLETE` | Delete that stack and create it again; the *Events* tab shows the first error. |
 
 ## Turning it off

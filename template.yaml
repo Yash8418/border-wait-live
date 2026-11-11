@@ -14,9 +14,18 @@ Parameters:
     Type: String
     Default: ""
     Description: Optional email address to notify when collection fails (leave blank for none).
+  ApiConcurrencyLimit:
+    Type: Number
+    Default: 0
+    MinValue: 0
+    Description: >
+      Reserved concurrency for the public API, which also caps it (0 = no reservation).
+      New AWS accounts have a total limit of 10, and Lambda requires 10 to stay unreserved,
+      so leave this at 0 until the account limit has been raised.
 
 Conditions:
   HasAlertEmail: !Not [!Equals [!Ref AlertEmail, ""]]
+  LimitApiConcurrency: !Not [!Equals [!Ref ApiConcurrencyLimit, 0]]
 
 Globals:
   Function:
@@ -81,8 +90,8 @@ Resources:
     Properties:
       Description: Public read API for the latest wait times and history
       Handler: api.app.handler
-      # Caps concurrent executions so a traffic spike can't run up costs.
-      ReservedConcurrentExecutions: 5
+      # Optionally caps concurrent executions so a traffic spike can't run up costs.
+      ReservedConcurrentExecutions: !If [LimitApiConcurrency, !Ref ApiConcurrencyLimit, !Ref AWS::NoValue]
       Policies:
         # Least privilege: the API only reads.
         - Statement:
