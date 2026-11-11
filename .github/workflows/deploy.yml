@@ -50,8 +50,37 @@ jobs:
         run: |
           sam deploy --parameter-overrides "AlertEmail=${{ vars.ALERT_EMAIL }}"
 
-      - name: Show API URL
+      - name: Read stack outputs
+        id: stack
         run: |
-          url=$(aws cloudformation describe-stacks --stack-name border-wait-live \
-            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" --output text)
-          echo "API: ${url}crossings" >> "$GITHUB_STEP_SUMMARY"
+          output() {
+            aws cloudformation describe-stacks --stack-name border-wait-live \
+              --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" --output text
+          }
+          echo "api_url=$(output ApiUrl)" >> "$GITHUB_OUTPUT"
+          echo "collector=$(output CollectorFunctionName)" >> "$GITHUB_OUTPUT"
+
+      - name: Run the collector once
+        # So the API has data straight away instead of after the first scheduled run.
+        run: |
+          aws lambda invoke --function-name "${{ steps.stack.outputs.collector }}" \
+            --cli-read-timeout 90 --log-type Tail --query FunctionError --output text result.json > error.txt
+          cat result.json; echo
+          if [ "$(cat error.txt)" != "None" ]; then echo "::error::Collector failed: $(cat result.json)"; exit 1; fi
+
+      - name: Smoke test the public API
+        env:
+          API_URL: ${{ steps.stack.outputs.api_url }}
+        run: |
+          body=$(curl -fsS --retry 3 --retry-delay 5 "${API_URL}crossings")
+          count=$(echo "$body" | jq '.count')
+          echo "$body" | jq -e '.crossings | map(.crossing_id) | index("ambassador-bridge") != null' > /dev/null \
+            || { echo "::error::Ambassador Bridge missing from /crossings"; exit 1; }
+          curl -fsS "${API_URL}crossings/ambassador-bridge/history" | jq -e 'has("readings")' > /dev/null
+          code=$(curl -s -o /dev/null -w '%{http_code}' "${API_URL}crossings/not-a-real-crossing")
+          [ "$code" = 404 ] || { echo "::error::Expected 404 for an unknown crossing, got $code"; exit 1; }
+          {
+            echo "### Deployed"
+            echo "- API: ${API_URL}crossings ($count crossings)"
+            echo "- Status page: open \`site/index.html\` with \`?api=${API_URL}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
