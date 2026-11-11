@@ -1,12 +1,14 @@
 # 🛂 Border Wait Live
 
+[![CI](https://github.com/Yash8418/border-wait-live/actions/workflows/ci.yml/badge.svg)](https://github.com/Yash8418/border-wait-live/actions/workflows/ci.yml)
+
 A serverless AWS pipeline that records live wait times at Canada–US land border crossings every 15 minutes and serves them through a public API.
 
-**Live API:** [`/crossings`](https://usxkgejvlxpu7g5qnoasanrtjm0stxqu.lambda-url.us-east-2.on.aws/crossings) · deployed in `us-east-2`, collecting every 15 minutes since November 11, 2026.
+**[Live status page →](https://yash8418.github.io/border-wait-live/)** · **Live API:** [`/crossings`](https://usxkgejvlxpu7g5qnoasanrtjm0stxqu.lambda-url.us-east-2.on.aws/crossings) · deployed in `us-east-2`, collecting every 15 minutes since November 11, 2026.
 
 ## Why
 
-The Canada Border Services Agency (CBSA) publishes **current** wait times, but its public **historical** data stopped being published at hourly detail after 2019 — recent years are only available as monthly summaries. This project collects the live feed continuously so hour-by-hour history exists again, starting with the Windsor–Detroit crossings.
+The Canada Border Services Agency (CBSA) publishes **current** wait times, but its public **historical** data stopped being published at hourly detail after 2019 — recent years are only available as monthly summaries. This project collects the live feed continuously so hour-by-hour history exists again, starting with the Windsor–Detroit crossings. It picks up where the historical analysis in **[border-wait-analysis](https://github.com/Yash8418/border-wait-analysis)** ends.
 
 ## Architecture
 
