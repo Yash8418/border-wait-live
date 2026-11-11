@@ -15,6 +15,21 @@ Setup takes about 15 minutes and only has to be done once.
 
 **Expected cost:** Lambda runs ~2,900 times a month for a few hundred milliseconds each, and DynamoDB stores a few hundred thousand small items a year. Both stay within the AWS ongoing free allowances; the read API uses a Lambda Function URL instead of API Gateway to avoid its charges. On accounts with a raised Lambda concurrency limit, set `ApiConcurrencyLimit` (e.g. 5) to cap the public API during a traffic spike; new accounts have a limit of 10, which doesn't leave room for a reservation.
 
+## Option A: deploy from AWS CloudShell (simplest)
+
+Use this if your account can't create a GitHub identity provider (some managed or Free plan accounts block `iam:CreateOpenIDConnectProvider`), or you just want to deploy by hand. CloudShell runs inside your account and is already signed in, so no keys are needed.
+
+Open **CloudShell** (the `>_` icon in the console's top bar) in the region you want and run:
+
+```bash
+git clone https://github.com/Yash8418/border-wait-live.git && cd border-wait-live
+sam deploy --region <region> --parameter-overrides AlertEmail=<your email>
+```
+
+No build step is needed: the functions only use the Python standard library and boto3, which Lambda provides. To deploy a later change, run `git pull` and the same `sam deploy` command again.
+
+## Option B: deploy automatically from GitHub Actions
+
 ## 2. Create the GitHub deploy role (one click)
 
 1. Download [`infra/github-deploy-role.yaml`](../infra/github-deploy-role.yaml) (*Download raw file* on GitHub).
